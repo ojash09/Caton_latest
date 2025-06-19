@@ -20,14 +20,7 @@ import DoctorMedicinesManager from "./components/DoctorMedicinesManager";
 import ExpiringMedicines from "./components/ExpiringMedicines";
 import LowStockMedicines from "./components/LowStockMedicines.tsx";
 import ProfilePage from "./components/ProfilePage";
-// import ContactUs from "./components/ContactUs.tsx";
-// Custom festival backgrounds
-// const festivalBackgrounds = {
-//   diwali: "https://example.com/diwali-bg.jpg",
-//   christmas: "https://example.com/christmas-bg.jpg",
-//   eid: "https://example.com/eid-bg.jpg",
-//   default: "https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg",
-// };
+
 
 const App: React.FC = () => {
   return (

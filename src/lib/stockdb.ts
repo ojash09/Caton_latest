@@ -248,6 +248,99 @@ export async function syncMedicinesToMongoDB(): Promise<void> {
   }
 }
 
+// Function to sync deletions
+export async function syncDeletions(): Promise<void> {
+
+  const userId = localStorage.getItem("userId");
+
+  // Fetch all medicines from IndexedDB
+  const indexedDBMedicines: OriginalMedicine[] = await db.medicines.toArray();
+  console.log("Medicines to sync to MongoDB:", indexedDBMedicines);
+
+  // Fetch all medicines from MongoDB
+  const mongoDBMedicines: MongoDBMedicine[] = await invoke("get_all_medicines", {
+    hospitalId: userId,
+  });
+
+  const indexedDBIds = new Set(indexedDBMedicines.map((medicine) => medicine.id));
+  const medicinesToDelete = mongoDBMedicines.filter(
+    (mongoMedicine) => !indexedDBIds.has(mongoMedicine.local_id)
+  );
+
+  for (const medicine of medicinesToDelete) {
+    try {
+      await invoke("delete_medicine", {
+        localId: medicine.local_id,
+        hospitalId: userId,
+      });
+      console.log(`Deleted medicine with local_id [${medicine.local_id}] from MongoDB.`);
+    } catch (error) {
+      console.error(`Error deleting medicine with local_id [${medicine.local_id}]:`, error);
+    }
+  }
+}
+
+// Function to sync updates
+export async function syncUpdateStock(): Promise<void> {
+
+  const userId = localStorage.getItem("userId");
+
+    // Fetch all medicines from IndexedDB
+    const indexedDBMedicines: OriginalMedicine[] = await db.medicines.toArray();
+
+  for (const medicine of indexedDBMedicines) {
+    try {
+      const batchExists = await invoke<boolean>("check_medicine_batch", {
+        localId: medicine.id,
+        hospitalId: userId,
+        name: medicine.name,
+      });
+
+      if (batchExists) {
+        await syncUpdateQuantity(medicine, userId);
+      } else {
+        await syncNewStock(medicine, userId);
+      }
+    } catch (error) {
+      console.error(`Error syncing medicine [${medicine.name}]:`, error);
+    }
+  }
+}
+
+// Function to update existing quantities
+async function syncUpdateQuantity(medicine: OriginalMedicine, userId: string | null): Promise<void> {
+  try {
+    await invoke("update_batch", {
+      localId: medicine.id,
+      quantity: medicine.quantity,
+      hospitalId: userId,
+    });
+    console.log(`Updated quantity for medicine [${medicine.name}] in MongoDB.`);
+  } catch (error) {
+    console.error(`Error updating quantity for medicine [${medicine.name}]:`, error);
+  }
+}
+
+// Function to sync new stock
+async function syncNewStock(medicine: OriginalMedicine, userId: string | null): Promise<void> {
+  try {
+    await invoke("insert_medicine", {
+      localId: medicine.id,
+      name: medicine.name,
+      batchNumber: medicine.batch_number,
+      expiryDate: medicine.expiry_date,
+      quantity: medicine.quantity,
+      purchasePrice: medicine.purchase_price,
+      sellingPrice: medicine.selling_price,
+      wholesalerName: medicine.wholesaler_name,
+      purchaseDate: medicine.purchase_date,
+      hospitalId: userId,
+    });
+    console.log(`Inserted new medicine [${medicine.name}] into MongoDB.`);
+  } catch (error) {
+    console.error(`Error inserting new medicine [${medicine.name}]:`, error);
+  }
+}
 
 // import { Wholesaler } from "../types"; // Replace with the actual path if needed
 

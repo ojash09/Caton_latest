@@ -348,6 +348,32 @@ pub async fn update_batch(
     Ok("Batch updated successfully.".to_string())
 }
 
+#[command]
+pub async fn update_quantity(
+    local_id: String,
+    batch_number: String,
+    quantity: u32,
+    hospital_id: String,
+) -> Result<String, String> {
+    let db = get_db_connection().await;
+    let collection: Collection<Medicine> = db.collection("medicines");
+
+    let filter = doc! {
+        "local_id": local_id,
+        "user_id": hospital_id,
+        "batch_number": batch_number,
+    };
+
+    let update_doc = doc! {
+        "$set": {
+            "quantity": quantity
+        }
+    };
+
+    collection.update_one(filter, update_doc, None).await.map_err(|e| e.to_string())?;
+    Ok("Quantity updated successfully.".to_string())
+}
+
 
 #[command]
 pub async fn search_medicines(

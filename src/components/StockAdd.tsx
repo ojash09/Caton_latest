@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { addMedicine } from "../lib/stockdb";
-import { searchMedicines, syncMedicinesToMongoDB } from "../lib/stockdb";
+import { searchMedicines, syncUpdateStock } from "../lib/stockdb";
 import { useToast } from "./ui/sonner";
 import ConfirmDialog from "./ConfirmDialog.tsx";
 
@@ -59,93 +59,23 @@ const StockAdd: React.FC = () => {
   useEffect(() => {
     const syncAndSchedule = async () => {
       try {
-        await syncMedicinesToMongoDB(); // Run immediately
+        await syncUpdateStock(); // Run immediately
       } catch (error) {
         console.error("Error syncing medicines:", error);
       }
       const intervalId = setInterval(async () => {
         try {
-          await syncMedicinesToMongoDB();
+          await syncUpdateStock();
         } catch (error) {
           console.error("Error syncing medicines:", error);
         }
-      }, 600000);
+      }, 3600000);
 
       return () => clearInterval(intervalId);
     };
     syncAndSchedule();
   }, []);
 
-  // const handleSubmit = async () => {
-  //   try {
-  //     for (const purchase of purchases) {
-  //       for (const medicine of purchase.medicines) {
-  //         if (
-  //           !medicine.name.trim() ||
-  //           !medicine.batchNumber.trim() ||
-  //           !medicine.expiryDate.trim() ||
-  //           medicine.quantity === null ||
-  //           medicine.purchasePrice === null ||
-  //           medicine.sellingPrice === null
-  //         ) {
-  //           addToast("Please fill in all fields for each medicine.", "info");
-  //           return;
-  //         }
-  //       }
-  //     }
-
-  //     // Confirmation dialog before proceeding with submission
-  //     const userConfirmed = window.confirm("Are you sure you want to confirm the purchase?");
-  //     if (!userConfirmed) {
-  //       return;
-  //     }
-
-  //     // Submit each medicine after confirmation
-  //     for (const purchase of purchases) {
-  //       for (const medicine of purchase.medicines) {
-  //         await addMedicine({
-  //           id: crypto.randomUUID(),
-  //           user_id: localStorage.getItem("userId") || "default_user",
-  //           name: medicine.name,
-  //           batch_number: medicine.batchNumber,
-  //           expiry_date: medicine.expiryDate,
-  //           quantity: Number(medicine.quantity),
-  //           purchase_price: Number(medicine.purchasePrice),
-  //           selling_price: Number(medicine.sellingPrice),
-  //           wholesaler_name: purchase.wholesalerName,
-  //           purchase_date: purchase.purchaseDate,
-  //         });
-
-  //         addToast(`Medicine saved locally: ${medicine.name}`, "success");
-  //       }
-  //     }
-
-  //     // Reset state to clear input fields after successful submission
-  //     setPurchases([
-  //       {
-  //         id: crypto.randomUUID(),
-  //         wholesalerName: "",
-  //         purchaseDate: dayjs().format("YYYY-MM-DD"),
-  //         medicines: [
-  //           {
-  //             id: crypto.randomUUID(),
-  //             name: "",
-  //             batchNumber: "",
-  //             expiryDate: "",
-  //             quantity: null,
-  //             purchasePrice: null,
-  //             sellingPrice: null,
-  //           },
-  //         ],
-  //       },
-  //     ]);
-
-  //     addToast("All data submitted successfully!", "success");
-  //   } catch (error) {
-  //     console.error("Error saving medicines:", error);
-  //     addToast("Failed to save medicines locally.", "error");
-  //   }
-  // };
 
   const handleSubmit = async () => {
     try {

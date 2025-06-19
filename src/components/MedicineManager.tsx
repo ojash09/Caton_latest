@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import loader from "./animations/loader.json"
 import Lottie from "lottie-react";
-import { fetchAllMedicines, updateMedicine, deleteLocalMedicine, syncMedicinesToMongoDB } from "../lib/stockdb";
+import { fetchAllMedicines, updateMedicine, deleteLocalMedicine, syncMedicinesToMongoDB, syncUpdateStock, syncDeletions } from "../lib/stockdb";
 // Define the Medicine type to match the backend structure
 type Medicine = {
   [x: string]: any;
@@ -27,29 +27,43 @@ const MedicineManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSyncMedicines = async () => {
     if (isSyncing) return; // Prevent multiple clicks
 
     setIsSyncing(true); // Set the syncing state to true
     try {
-      await syncMedicinesToMongoDB(); // Call the imported function
-      console.log("Medicines synced successfully!");
+        await syncUpdateStock(); // Call the imported function
+        console.log("Medicines synced successfully!");
     } catch (error) {
-      console.error("Error syncing medicines:", error);
+        console.error("Error syncing medicines:", error);
     } finally {
-      setIsSyncing(false); // Reset the syncing state
+        setIsSyncing(false); // Reset the syncing state
     }
-  };
+};
 
-  const loaderOptions = {
+const handleSyncDeletions = async () => {
+    if (isDeleting) return; // Prevent multiple clicks
+
+    setIsDeleting(true); // Set the deleting state to true
+    try {
+        await syncDeletions(); // Call the function to handle deletions
+        console.log("Deletions synced successfully!");
+    } catch (error) {
+        console.error("Error syncing deletions:", error);
+    } finally {
+        setIsDeleting(false); // Reset the deleting state
+    }
+};
+const loaderOptions = {
     loop: true,
     autoplay: true,
     animationData: loader,
     rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
+        preserveAspectRatio: "xMidYMid slice",
     },
-  };
+};
 
 
 
@@ -70,8 +84,8 @@ const MedicineManager: React.FC = () => {
   };
 
   useEffect(() => {
-      fetchMedicines();
-    }, [hospitalId]);
+    fetchMedicines();
+  }, [hospitalId]);
   // Update stock of a medicine
   const updateStock = async (updatedMedicine: Medicine) => {
     setMedicines((prev) =>
@@ -109,25 +123,32 @@ const MedicineManager: React.FC = () => {
       } catch (error) {
         console.error("Error syncing medicines:", error);
       }
-    }, 60000);
+    }, 21600000);
 
     return () => clearInterval(intervalId);
   }, []);
 
   return (
     <div className="p-4">
-<div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-indigo-600">Medicine Manager</h1>
+      <div className="flex items-center justify-between mb-6"> 
+    <h1 className="text-3xl font-bold text-indigo-600">Medicine Manager</h1>
+    <div className="flex items-center space-x-4">
         <button
-          onClick={handleSyncMedicines}
-          className={`${
-            isSyncing ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-          } text-white px-4 py-2 rounded`}
-          disabled={isSyncing} // Disable the button while syncing
+            onClick={handleSyncMedicines}
+            className={`${isSyncing ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"} text-white px-4 py-2 rounded`}
+            disabled={isSyncing} // Disable the button while syncing
         >
-          {isSyncing ? "Syncing..." : "Sync Medicines"}
+            {isSyncing ? "Syncing..." : "Sync Medicines"}
         </button>
-      </div>
+        <button
+            onClick={handleSyncDeletions}
+            className={`${isDeleting ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"} text-white px-4 py-2 rounded`}
+            disabled={isDeleting} // Disable the button while deleting
+        >
+            {isDeleting ? "Syncing Deletions..." : "Sync Deletions"}
+        </button>
+    </div>
+</div>
       {/* Medicine Table */}
       {loading ? (
         // Render loader when loading

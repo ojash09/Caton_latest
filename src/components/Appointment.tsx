@@ -63,6 +63,7 @@ const Appointment: React.FC = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { addToast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -219,46 +220,49 @@ const Appointment: React.FC = () => {
   
 
   const handleSaveAppointment = async () => {
+    if (isSaving) return; // Prevent multiple clicks during saving
+  
+    setIsSaving(true); // Set loading state
     try {
       const userId = localStorage.getItem("userId");
       if (!userId) {
         addToast("User ID is missing. Please log in again.", "info");
+        setIsSaving(false);
         return;
       }
-
+  
       if (!patient.name) {
         addToast("Patient name is required.", "info");
+        setIsSaving(false);
         return;
       }
-
+  
       if (selectedMedicines.length === 0) {
         addToast("Please select at least one medicine.", "info");
+        setIsSaving(false);
         return;
       }
-
+  
       const appointmentData = {
         patientName: patient.name,
-        // mobile: patient.mobile,
         age: Number(patient.age),
         gender: patient.gender,
-        // address: patient.address,
         investigation: patient.investigation || null,
         diagnosis: patient.diagnosis || null,
         advice: patient.advice || null,
         medicines: selectedMedicines.map(({ id, name, quantity }) => ({ id, name, quantity })),
         hospitalId: userId,
       };
-
+  
       await invoke("save_appointment", appointmentData);
       await addAppointmentToPatient(patient.name, appointmentData);
-
+  
       addToast("Appointment saved successfully!", "success");
+  
       setPatient({
         name: "",
-        // mobile: "",
         age: 0,
         gender: "",
-        // address: "",
         investigation: "",
         diagnosis: "",
         advice: "",
@@ -269,13 +273,15 @@ const Appointment: React.FC = () => {
       setAppointments([]);
       setSelectedAppointment(null);
       setSelectedPatient(null);
-
+  
     } catch (error: any) {
-
       addToast(`Failed to save appointment: ${error.message}`, "error");
       console.error("Error saving appointment:", error);
+    } finally {
+      setIsSaving(false); // Reset loading state
     }
   };
+  
 
 
 
@@ -292,12 +298,13 @@ const Appointment: React.FC = () => {
             <input
               type="text"
               placeholder="Search Patient by Name"
+              autoComplete="off"
               value={patientSearch}
               onChange={handlePatientSearchChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border "
             />
             {patientResults.length > 0 && (
-              <div className="border rounded mt-2 bg-white p-2">
+              <div className="border mt-2 bg-white p-2">
                 {patientResults.map((patient) => (
                   <div
                     key={patient.id}
@@ -316,7 +323,7 @@ const Appointment: React.FC = () => {
           {selectedPatient && (
             <div className="mt-4">
               <h3 className="text-lg font-bold mb-2">Appointments for {selectedPatient.name}:</h3>
-              <div className="border rounded bg-white p-4">
+              <div className="border bg-white p-4">
                 {Appointments.length > 0 ? (
                   Appointments.map((appointment, index) => (
                     <div
@@ -385,7 +392,7 @@ const Appointment: React.FC = () => {
       placeholder="Enter patient name"
       value={patient.name}
       onChange={handleInputChange}
-      className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="w-full p-3 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
     />
   </div>
 
@@ -402,7 +409,7 @@ const Appointment: React.FC = () => {
         placeholder="Enter age"
         value={patient.age}
         onChange={handleInputChange}
-        className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full p-3 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
     </div>
     <div className="flex-1 flex flex-col">
@@ -414,7 +421,7 @@ const Appointment: React.FC = () => {
         name="gender"
         value={patient.gender}
         onChange={handleInputChange}
-        className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full p-3 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       >
         <option value="">Select Gender</option>
         <option value="Male">Male</option>
@@ -435,7 +442,7 @@ const Appointment: React.FC = () => {
       placeholder="Enter investigation details"
       value={patient.investigation}
       onChange={handleInputChange}
-      className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="w-full p-3 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       rows={2}
     />
   </div>
@@ -451,7 +458,7 @@ const Appointment: React.FC = () => {
       placeholder="Enter diagnosis details"
       value={patient.diagnosis}
       onChange={handleInputChange}
-      className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="w-full p-3 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       rows={2}
     />
   </div>
@@ -467,7 +474,7 @@ const Appointment: React.FC = () => {
       placeholder="Enter advice"
       value={patient.advice}
       onChange={handleInputChange}
-      className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="w-full p-3 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       rows={2}
     />
   </div>
@@ -477,7 +484,7 @@ const Appointment: React.FC = () => {
         </div>
 
         {/* Medicine Section */}
-        <div className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/2 h-[75vh] overflow-auto">
+        <div className="bg-white shadow-md rounded-sm p-6 w-full md:w-1/2 h-[75vh] overflow-auto">
           <h2 className="text-xl font-bold mb-4">Medicine Details</h2>
 
           {/* Medicine Search */}
@@ -545,10 +552,10 @@ const Appointment: React.FC = () => {
       {/* Save Button */}
       <div className="flex justify-center mt-4">
         <button
-          onClick={handleSaveAppointment}
+          onClick={handleSaveAppointment} disabled={isSaving}
           className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
         >
-          Save Appointment
+          {isSaving ? "Saving..." : "Save Appointment"}
         </button>
       </div>
     </div>

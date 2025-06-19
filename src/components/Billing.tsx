@@ -5,7 +5,7 @@ import { useToast } from "./ui/sonner";
 import debounce from "lodash.debounce";
 import BillingSummary from "./BillingSummary";
 import { printBill } from "../hooks/printBill";
-import { fetchMedicineById, searchMedicines, syncMedicinesToMongoDB, updateMedicine } from "../lib/stockdb";
+import { fetchMedicineById, searchMedicines, syncUpdateStock, updateMedicine } from "../lib/stockdb";
 import { salesDb } from "../lib/db";
 import React from "react";
 
@@ -134,17 +134,17 @@ const Billing: React.FC<Props> = ({ location }) => {  // const location = useLoc
 useEffect(() => {
   const syncAndSchedule = async () => {
     try {
-      await syncMedicinesToMongoDB(); // Run immediately
+      await syncUpdateStock(); // Run immediately
     } catch (error) {
       console.error("Error syncing medicines:", error);
     }
     const intervalId = setInterval(async () => {
       try {
-        await syncMedicinesToMongoDB();
+        await syncUpdateStock();
       } catch (error) {
         console.error("Error syncing medicines:", error);
       }
-    }, 600000);
+    }, 3600000);
 
     return () => clearInterval(intervalId);
   };
@@ -459,3 +459,5 @@ const handleSearchMedicine = async (query: string) => {
 };
 
 export default Billing;
+
+

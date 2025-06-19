@@ -24,17 +24,21 @@ const MedicineViewer: React.FC = () => {
 
     const handleSyncMedicines = async () => {
         if (isSyncing) return; // Prevent multiple clicks
-
+    
         setIsSyncing(true); // Set the syncing state to true
         try {
             await syncDoctorMedicinesFromMongoDB(); // Call the imported function
             console.log("Medicines synced successfully!");
+    
+            // Refresh medicines by re-fetching them
+            await fetchMedicines(); // Re-fetch the medicines after syncing
         } catch (error) {
             console.error("Error syncing medicines:", error);
         } finally {
             setIsSyncing(false); // Reset the syncing state
         }
     };
+    
 
     const loaderOptions = {
         loop: true,
