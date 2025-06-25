@@ -7,16 +7,20 @@ use lettre::message::header::ContentType;
 /// Send OTP Email with Enhanced UI
 pub async fn send_otp_email(recipient: &str, otp: &str) -> Result<(), String> {
     // Load environment variables
-    dotenv().ok();
+    // dotenv().ok();
 
     // Get SMTP configuration from environment variables
-    let smtp_user = env::var("SMTP_USER").map_err(|_| "SMTP_USER must be set in .env".to_string())?;
-    let smtp_password = env::var("SMTP_PASSWORD").map_err(|_| "SMTP_PASSWORD must be set in .env".to_string())?;
-    let smtp_server = env::var("SMTP_SERVER").map_err(|_| "SMTP_SERVER must be set in .env".to_string())?;
-    let smtp_port = env::var("SMTP_PORT")
-        .map_err(|_| "SMTP_PORT must be set in .env".to_string())?
-        .parse::<u16>()
-        .map_err(|_| "SMTP_PORT must be a valid number".to_string())?;
+    // let smtp_user = env::var("SMTP_USER").map_err(|_| "SMTP_USER must be set in .env".to_string())?;
+    // let smtp_password = env::var("SMTP_PASSWORD").map_err(|_| "SMTP_PASSWORD must be set in .env".to_string())?;
+    // let smtp_server = env::var("SMTP_SERVER").map_err(|_| "SMTP_SERVER must be set in .env".to_string())?;
+    // let smtp_port = env::var("SMTP_PORT")
+    //     .map_err(|_| "SMTP_PORT must be set in .env".to_string())?
+    //     .parse::<u16>()
+    //     .map_err(|_| "SMTP_PORT must be a valid number".to_string())?;
+    let smtp_user = env!("SMTP_USER");
+    let smtp_password = env!("SMTP_PASSWORD");
+    let smtp_server = env!("SMTP_SERVER");
+    let smtp_port: u16 = env!("SMTP_PORT").parse().map_err(|_| "Invalid SMTP_PORT".to_string())?;
 
     // Create a beautiful HTML email template
     let email_html = format!(
@@ -109,7 +113,7 @@ pub async fn send_otp_email(recipient: &str, otp: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     // Set up the mailer
-    let creds = Credentials::new(smtp_user.clone(), smtp_password.clone());
+    let creds = Credentials::new(smtp_user.to_string(), smtp_password.to_string());
     let mailer = SmtpTransport::relay(&smtp_server)
         .map_err(|_| "Failed to connect to SMTP server".to_string())?
         .port(smtp_port)
